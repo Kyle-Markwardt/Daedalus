@@ -29,7 +29,7 @@ This project aims to create an environment for training an AI to play the board 
 
 ### Prerequisites
 
-- Python 3.x
+- Python 3.11
 - Required libraries: `random`, `collections`, `matplotlib`, `numpy`
 
 ### Installation
