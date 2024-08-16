@@ -194,6 +194,13 @@ class Board:
         return {(0, 0), (0, 2), (0, 4), (0, 6), (2, 0), (2, 2), (2, 4), (2, 6), (4, 0), (4, 2), (4, 4), (4, 6), (6, 0), (6, 2), (6, 4), (6, 6)}
     
 
+    def rotate_excess_tile(self, rotation):
+        # Rotate the excess tile by the specified degrees (must be a multiple of 90)
+        if rotation % 90 != 0:
+            raise ValueError("Rotation must be a multiple of 90 degrees")
+        self.excess_tile.orientation = (self.excess_tile.orientation + rotation) % 360
+
+
     def push_tile(self, direction, position):
         exit_position = None
         if direction in ['left', 'right'] and position in [1, 3, 5]:
@@ -203,6 +210,7 @@ class Board:
         else:
             print("Invalid push. Only rows and columns 1, 3, and 5 can be pushed.")
         return exit_position
+
 
     def _push_row(self, direction, row):
         if direction == 'left':
@@ -219,6 +227,7 @@ class Board:
             self.tiles[row][0] = self.excess_tile
             self.excess_tile = new_excess_tile
             return (row, 0)
+
 
     def _push_column(self, direction, col):
         if direction == 'up':
@@ -238,19 +247,33 @@ class Board:
     
 
     # Board debugging and visualization
-    def visualize_board(self):
-        fig, ax = plt.subplots()
-        ax.set_xticks(np.arange(-0.5, self.size, 1))
-        ax.set_yticks(np.arange(-0.5, self.size, 1))
-        ax.set_xticklabels([])
-        ax.set_yticklabels([])
+    def visualize_board(self, players, valid_moves=set()):
+        fig, ax = plt.subplots(figsize=(10, 10))
+        # ax.set_xticks(np.arange(-0.5, self.size, 1))
+        # ax.set_yticks(np.arange(-0.5, self.size, 1))
+        ax.set_xticks(np.arange(self.size))  # Adjust xticks to the correct range
+        ax.set_yticks(np.arange(self.size))  # Adjust yticks to the correct range
+        ax.set_xticklabels(range(self.size))
+        ax.set_yticklabels(range(self.size))
         ax.grid(which='both')
+
+        # Remove default axis labels (to avoid duplicates)
+        ax.tick_params(left=False, bottom=False)
+
+        # Add labels for row and column numbers on all sides
+        for i in range(self.size):
+            ax.text(-1, i, str(i), ha='center', va='center', fontsize=12, color='black')  # Row labels on the left
+            ax.text(self.size, i, str(i), ha='center', va='center', fontsize=12, color='black')  # Row labels on the right
+            ax.text(i, -1, str(i), ha='center', va='center', fontsize=12, color='black')  # Column labels on the top
+            ax.text(i, self.size, str(i), ha='center', va='center', fontsize=12, color='black')  # Column labels on the bottom
 
         for row in range(self.size):
             for col in range(self.size):
                 tile = self.tiles[row][col]
                 if tile is not None:
-                    rect = plt.Rectangle((col - 0.5, row - 0.5), 1, 1, fill=None, edgecolor='black')
+                    # Highlight valid moves with light gray background, and keep invalid tiles white
+                    color = 'lightgray' if (row, col) in valid_moves else 'white'
+                    rect = plt.Rectangle((col - 0.5, row - 0.5), 1, 1, fill=True, color=color, edgecolor='black')  # Ensure borders are visible
                     ax.add_patch(rect)
                     
                     # Draw paths based on open paths
@@ -266,13 +289,27 @@ class Board:
                     
                     # Draw token if present
                     if tile.token:
-                        ax.text(col, row, tile.token, ha='center', va='center', fontsize=12, color='red')
+                        ax.text(col + 0.25, row - 0.25, tile.token, ha='center', va='center', fontsize=12, color='red')
+    
+        # Player color mapping based on ID
+        player_colors = {
+            1: 'green',
+            2: 'orange',
+            3: 'blue',
+            4: 'red'
+        }
 
+        # Draw player positions
+        for player in players:
+            row, col = player.position
+            ax.text(col, row, f'P{player.id}', ha='center', va='center', fontsize=16, color=player_colors.get(player.id, 'black'))  # Default to black if player ID is out of range
+        
         plt.gca().invert_yaxis()
         plt.show()
 
+
     def visualize_excess_tile(self):
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(3, 3))
         ax.set_xticks([])
         ax.set_yticks([])
         ax.set_xticklabels([])
