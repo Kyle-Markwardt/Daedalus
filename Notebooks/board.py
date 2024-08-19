@@ -254,20 +254,23 @@ class Board:
         ax.set_xticklabels(range(self.size))  # Add column numbers
         ax.set_yticklabels(range(self.size))  # Add row numbers
         ax.grid(visible=False)
-
+        ax.minorticks_off()
 
         # Add labels for row and column numbers on board edges
         for i in range(self.size):
             ax.text(self.size, i, str(i), ha='center', va='center', fontsize=12, color='black')  # Row labels on the right
             ax.text(i, -1, str(i), ha='center', va='center', fontsize=12, color='black')  # Column labels on the top
         
+        # Debug: Print valid moves
+        print("Valid Moves:", valid_moves)
+
         for row in range(self.size):
             for col in range(self.size):
                 tile = self.tiles[row][col]
                 if tile is not None:
                     # Highlight valid moves with light gray background, and keep invalid tiles white
                     color = 'lightgray' if (row, col) in valid_moves else 'white'
-                    rect = plt.Rectangle((col - 0.5, row - 0.5), 1, 1, fill=True, facecolor=color, edgecolor='gray')
+                    rect = plt.Rectangle((col - 0.5, row - 0.5), 1, 1, facecolor=color, edgecolor='gray')
                     ax.add_patch(rect)
                     
                     # Draw paths based on open paths
