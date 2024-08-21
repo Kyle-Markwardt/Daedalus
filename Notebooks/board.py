@@ -248,24 +248,21 @@ class Board:
 
     # Board debugging and visualization
     def visualize_board(self, players, valid_moves=set()):
-        fig, ax = plt.subplots(figsize=(10, 10))
-        # ax.set_xticks(np.arange(-0.5, self.size, 1))
-        # ax.set_yticks(np.arange(-0.5, self.size, 1))
+        fig, ax = plt.subplots(figsize=(10, 10))  
         ax.set_xticks(np.arange(self.size))  # Adjust xticks to the correct range
         ax.set_yticks(np.arange(self.size))  # Adjust yticks to the correct range
-        ax.set_xticklabels(range(self.size))
-        ax.set_yticklabels(range(self.size))
-        ax.grid(which='both')
+        ax.set_xticklabels(range(self.size))  # Add column numbers
+        ax.set_yticklabels(range(self.size))  # Add row numbers
+        ax.grid(visible=False)
+        ax.minorticks_off()
 
-        # Remove default axis labels (to avoid duplicates)
-        ax.tick_params(left=False, bottom=False)
-
-        # Add labels for row and column numbers on all sides
+        # Add labels for row and column numbers on board edges
         for i in range(self.size):
-            ax.text(-1, i, str(i), ha='center', va='center', fontsize=12, color='black')  # Row labels on the left
             ax.text(self.size, i, str(i), ha='center', va='center', fontsize=12, color='black')  # Row labels on the right
             ax.text(i, -1, str(i), ha='center', va='center', fontsize=12, color='black')  # Column labels on the top
-            ax.text(i, self.size, str(i), ha='center', va='center', fontsize=12, color='black')  # Column labels on the bottom
+        
+        # Debug: Print valid moves
+        print("Valid Moves:", valid_moves)
 
         for row in range(self.size):
             for col in range(self.size):
@@ -273,7 +270,7 @@ class Board:
                 if tile is not None:
                     # Highlight valid moves with light gray background, and keep invalid tiles white
                     color = 'lightgray' if (row, col) in valid_moves else 'white'
-                    rect = plt.Rectangle((col - 0.5, row - 0.5), 1, 1, fill=True, color=color, edgecolor='black')  # Ensure borders are visible
+                    rect = plt.Rectangle((col - 0.5, row - 0.5), 1, 1, facecolor=color, edgecolor='gray')
                     ax.add_patch(rect)
                     
                     # Draw paths based on open paths
@@ -287,14 +284,14 @@ class Board:
                     if paths['down']:
                         ax.plot([col, col], [row, row+0.5], color='blue')
                     
-                    # Draw token if present
+                    # Draw token if present (move to the upper-right quadrant)
                     if tile.token:
                         ax.text(col + 0.25, row - 0.25, tile.token, ha='center', va='center', fontsize=12, color='red')
-    
+        
         # Player color mapping based on ID
         player_colors = {
             1: 'green',
-            2: 'orange',
+            2: 'black',  # Change P2 color to black
             3: 'blue',
             4: 'red'
         }
@@ -302,7 +299,7 @@ class Board:
         # Draw player positions
         for player in players:
             row, col = player.position
-            ax.text(col, row, f'P{player.id}', ha='center', va='center', fontsize=16, color=player_colors.get(player.id, 'black'))  # Default to black if player ID is out of range
+            ax.text(col, row, f'P{player.id}', ha='center', va='center', fontsize=16, color=player_colors.get(player.id, 'black'))
         
         plt.gca().invert_yaxis()
         plt.show()
