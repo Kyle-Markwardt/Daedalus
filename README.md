@@ -1,62 +1,142 @@
-# Labyrinth AI Training Environment
+# Daedalus
 
-This project aims to create an environment for training an AI to play the board game Labyrinth. The environment simulates the game mechanics, including the board setup, tile pushing, player movement, and token collection.
+**Python reference implementation and RL training backend for [Hawara](https://github.com/Kyle-Markwardt) — an Egyptian labyrinth tile-pushing game.**
 
-## Project Overview
+Hawara is a digital board game inspired by the shifting-tile labyrinth mechanic, themed around the sunken Egyptian labyrinth near Lake Moeris — the structure described by Herodotus as surpassing even the pyramids. This repository contains the authoritative Python game engine, which serves two purposes:
 
-### Completed Features
+1. **Reference implementation** — the source of truth for game rules, ported to GDScript for the Godot 4 game
+2. **RL training environment** — a Gymnasium-compatible environment for training AI agents (in progress)
 
-- **Game Board**: The game board is initialized with tiles and tokens.
-- **Place Tokens**: Tokens are placed on the board, with fixed and movable tiles correctly assigned.
-- **Enable Tile Pushing**: Players can push tiles onto the board, moving rows or columns.
-- **Create Player**: Player objects are created with initial positions and a hand of cards.
-- **Player Tile Push**: Players can select a tile to push and execute the push action.
-- **Player Move**: Players can move their piece along valid paths on the board.
-- **LabyrinthEnv Outline**: A rough outline of the LabyrinthEnv class has been created to manage the game environment.
-- ~~**Edge-to-Edge Jumping**: Allow players to move from one edge of the board to the opposite edge if paths are open.~~ These were my house rules, apparently not explicitly clarified in game rules but diagram showing valid moves does not include this ability.
-- **Deal Cards**: Implement the card dealing mechanism for players.
-- **Multiple Players**: Extend the environment to support multiple players.
-- **Collect Tokens**: Enable players to collect tokens when landing on corresponding tiles.
+The shipped game lives in a separate Godot 4 repository. This repo is the logic layer.
 
+---
 
-### To-Do List
+## Game Overview
 
-- **Fix Free Tile Display**: Currently, except for straight path tiles, the inserted piece orientation matches neither the default path orientation nor the displayed excess tile.
-- **Validate Piece Movement**: Implement logic to ensure players can only move along valid paths.
-- **Move Player Pieces With Tiles**: Currently pushing the row a player is on does not push the Player piece with the tile they are on.
-- **Handle Player Piece Pushed Off Edge**: Implement logic to handle scenarios where a player's piece is pushed off the edge of the board.
-- **Return to Home Base**: Implement the logic for players to return to their home base after collecting all tokens.
-- **End Game Logic**: End game when one player has collected all tokens and returned to base.
-- **Implement Scoring Weights for AI Training**: Decide and implement training weights for collecting tokens and winning the game.
-- **Optimize for AI Training**: Remove or separate some debugging and visualization tools, as well as streamlining input commands.
-- **Create and Train AI Agents**: Develop AI agents and train them using the environment.
-- **Make Board Prettier**: Include wider paths, background image on tiles, card images.
-- **Improve User Interface**: Make better commands and visualization for human users.
-- **Select Number of Players and Number of AI**: Allow users to select players and AI agents.
-- **Host?**: Considering making a streamlit app or something.
+Hawara is a 4-player tile-pushing board game played on a 7×7 grid. On each turn a player:
+
+1. Rotates the spare tile and slides it into any movable row or column (rows/columns 1, 3, 5), pushing one tile off the opposite edge
+2. Moves their piece along any connected path reachable from their new position
+
+The goal: collect your 6 assigned artifacts in order, then return to your starting corner to win.
+
+**24 Egyptian artifacts** are hidden across the board — 12 on fixed tiles, 12 shuffled into movable tiles each game. Tokens include the Alabaster Canopic Vessel, Cartouche of Amenemhat, Tekenu Shroud, Mehen Game Board, and others. The Greek mythology token set is preserved as an alternate skin (`token_names_greek` in `board.py`).
+
+---
+
+## Repository Structure
+
+```
+Daedalus/
+├── Notebooks/
+│   ├── board.py          # Board, Tile classes — grid, tile pushing, BFS pathfinding
+│   ├── game_logic.py     # Player, LabyrinthEnv — game orchestration, turn logic
+│   └── main.py           # CLI game loop (human-playable, matplotlib visualization)
+├── tests/
+│   ├── conftest.py
+│   ├── test_board.py     # Excess tile pool, push mechanics
+│   └── test_game_logic.py # Player-tile sync, anti-pushback, end-game
+└── requirements.txt
+```
+
+---
+
+## Current Status
+
+### Phase 0 — Python Logic (Complete)
+
+All critical game bugs resolved:
+
+| Bug | Status |
+|---|---|
+| Player pieces not moving with pushed tiles | Fixed — players wrap to opposite edge if pushed off |
+| Anti-pushback check silently failing (tuple vs int comparison) | Fixed |
+| No end-game condition | Fixed — collect all tokens + return home to win |
+| Excess tile always spawning as `straight` type | Fixed — drawn from shuffled movable pool |
+
+**30 unit tests passing** (`pytest tests/`).
+
+### Phase 1 — Godot 4 Port (Up next)
+
+Porting the game engine to Godot 4 (GDScript). The Python implementation here is the spec — every rule, edge case, and BFS algorithm gets replicated exactly before visuals are added.
+
+### Phase 2 — Rule-Based AI
+
+Heuristic opponent evaluating all legal push candidates (up to 44: 11 pushes × 4 orientations) via board state simulation.
+
+### Phase 3 — Web / itch.io Demo
+
+HTML5 export of the Godot build, hosted on itch.io as a free demo.
+
+### Phase 4 — Steam Release
+
+Full visual polish, GodotSteam integration, achievements, Steam Deck support.
+
+### Phase 5+ — RL Training Pipeline
+
+Gymnasium wrapper around this Python environment, trained with `sb3-contrib.MaskablePPO`. Trained policy exported to ONNX and embedded in Godot via GDScript matrix inference — no runtime Python dependency in the shipped game.
+
+---
 
 ## Getting Started
 
 ### Prerequisites
 
 - Python 3.11
-- Required libraries: `random`, `collections`, `matplotlib`, `numpy`
+- `numpy`, `matplotlib` (game), `pytest` (tests)
 
 ### Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Kyle-Markwardt/Daedalus.git
-   cd Daedalus
-   ```
-2. Install dependencies
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+git clone https://github.com/Kyle-Markwardt/Daedalus.git
+cd Daedalus
+pip install -r requirements.txt
+```
 
-### Contributing
-Contributions are welcome! Please fork the repository and create a pull request with your changes.
+### Run the game (CLI)
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+```bash
+cd Notebooks
+python main.py
+```
 
-Feel free to modify the README as the project progresses and additional features are implemented.
+### Run tests
+
+```bash
+MPLBACKEND=Agg pytest tests/ -v
+```
+
+On Windows:
+
+```powershell
+$env:MPLBACKEND="Agg"; python -m pytest tests/ -v
+```
+
+---
+
+## Architecture
+
+### `Board` (`board.py`)
+- 7×7 grid of `Tile` objects
+- 16 fixed tiles (corners + interior T-junctions with tokens A–L)
+- 33 movable tiles shuffled each game; 1 spare tile held as the excess
+- `push_tile(direction, lane)` — shifts row/col 1, 3, or 5; returns exit position
+- `get_open_paths()` per tile — drives all BFS pathfinding
+
+### `LabyrinthEnv` (`game_logic.py`)
+- Owns the board and 4 `Player` objects
+- `step(player_id, action)` — dispatches push or move actions
+- `get_valid_moves(pos)` — flood-fill BFS returning all reachable cells
+- `is_done()` — returns `(True, winner_id)` when a player collects all tokens and reaches their home corner
+- `last_push` — tracks `(direction, lane)` to enforce the anti-pushback rule
+
+### `Player` (`game_logic.py`)
+- `home` — starting corner; must be reached after all tokens collected
+- `current_card` — the artifact to find next; becomes `'HOME'` when all collected
+- `collect_token(token)` — collects if token matches current card; advances to next
+
+---
+
+## License
+
+MIT
