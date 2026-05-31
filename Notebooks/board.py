@@ -26,7 +26,7 @@ movable_tokens = [
     "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X"
 ]
 
-token_names = {
+token_names_greek = {
     "A": "Golden Fleece",
     "B": "Pandora’s Box",
     "C": "Ariadne’s Thread",
@@ -50,8 +50,39 @@ token_names = {
     "U": "Chariot of Helios",
     "V": "Gorgon’s Shield",
     "W": "Caduceus of Hermes",
-    "X": "Pomegranate of Persephone"
+    "X": "Pomegranate of Persephone",
 }
+
+# Fixed tokens (A–L) are always present on the board.
+# Movable tokens (M–X) shuffle into random tile positions each game.
+token_names_egyptian = {
+    "A": "Scarab of Khepri",
+    "B": "Eye of Ra",
+    "C": "Alabaster Canopic Vessel",   # the impossibly precision-lathed stone jars
+    "D": "Ankh of Eternal Life",
+    "E": "Book of the Dead",
+    "F": "Cartouche of Amenemhat",     # Amenemhat III — pharaoh Herodotus attributed the labyrinth to
+    "G": "Ushabti Figure",
+    "H": "Djed Pillar",
+    "I": "Was Scepter",
+    "J": "Winged Scarab Pectoral",
+    "K": "Blue Lotus Chalice",
+    "L": "Solar Barque of Ra",
+    "M": "Tyet of Isis",               # knot of Isis; blood-red jasper; looks like an ankh with drooping arms
+    "N": "Feather of Ma’at",
+    "O": "Peseshkef Blade",            # forked flint blade used in Opening of the Mouth ceremony
+    "P": "Sistrum of Hathor",
+    "Q": "Benben Stone",               # primordial mound of Heliopolis; possibly a meteorite
+    "R": "Sekhem Scepter",
+    "S": "Tekenu Shroud",              # most mysterious object in Egyptian burial practice; unknown purpose
+    "T": "Mehen Game Board",           # ancient coiled-serpent board game predating Senet; rules unknown
+    "U": "Hedgehog Amulet",            # genuinely common sacred burial object
+    "V": "Aker Horizon Stone",         # double-lion deity facing sunrise and sunset simultaneously
+    "W": "Shen Ring of Eternity",      # the loop that elongates into a cartouche
+    "X": "Heart of Osiris",
+}
+
+token_names = token_names_egyptian  # active theme; swap to token_names_greek for Greek skin
 
 # Tile List
 movable_tiles = [
@@ -159,8 +190,9 @@ class Board:
                     tile_index += 1
             tile_objects.append(row_tiles)
 
-        # Set the leftover tile as the excess tile
-        self.excess_tile = Tile(type="straight", orientation=random.choice([0, 90, 180, 270]))
+        # Set the leftover tile (34th) as the excess tile, drawn from the shuffled pool
+        tile_info = movable_tiles[tile_index]
+        self.excess_tile = Tile(type=tile_info["type"], orientation=random.choice([0, 90, 180, 270]), token=tile_info["token"])
 
         return tile_objects
 

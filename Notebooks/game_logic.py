@@ -4,9 +4,12 @@ from board import Board, Tile
 
 # Define Player class
 class Player:
+    HOME_POSITIONS = {1: (0, 0), 2: (0, 6), 3: (6, 0), 4: (6, 6)}
+
     def __init__(self, id, start_position, cards):
         self.id = id
         self.position = start_position
+        self.home = self.HOME_POSITIONS[id]
         self.cards = deque(cards)  # Use deque for easy card management
         self.current_card = self.cards[0] if self.cards else None
 
@@ -21,12 +24,13 @@ class Player:
         self.position = new_position
 
     def collect_token(self, token):
-        # If the token matches the player's current card, collect it
         if token == self.current_card:
             print(f"Player {self.id} collected token: {token}")
-            self.cards.popleft()  # Discard the current card
-            # Flip to the next card in the player's hand
-            self.current_card = self.cards[0] if self.cards else None
+            self.cards.popleft()
+            if self.cards:
+                self.current_card = self.cards[0]
+            else:
+                self.current_card = 'HOME'  # all tokens collected; must return to home corner
 
     def __repr__(self):
         return f"Player({self.id}, Position: {self.position}, Current Card: {self.current_card}, Remaining Cards: {list(self.cards)})"
@@ -36,7 +40,7 @@ class LabyrinthEnv:
     def __init__(self, board):
         self.board = board
         self.player = None
-        self.last_exit_position = None  # Track the last exit position
+        self.last_push = None  # (direction, lane) of the most recent push
         self.reset()
 
     def reset(self):
@@ -60,7 +64,7 @@ class LabyrinthEnv:
 
         # Store players in the environment
         self.players = [player_1, player_2, player_3, player_4]
-        self.last_exit_position = None
+        self.last_push = None
 
     def add_player(self, player):
         self.players.append(player)
@@ -76,24 +80,35 @@ class LabyrinthEnv:
         direction = action['direction']
         push_position = action['position']
 
-        # Check if the push is valid
         if self.is_invalid_push(direction, push_position):
             raise ValueError("Invalid push location: No pushback allowed.")
 
-        # Perform the push and update the last exit position
-        exit_position = self.board.push_tile(direction, push_position)
-        self.last_exit_position = (direction, exit_position)
+        self.board.push_tile(direction, push_position)
+        self.last_push = (direction, push_position)
+
+        # Move any player whose tile was pushed, wrapping off-edge players to opposite side
+        size = self.board.size
+        for player in self.players:
+            row, col = player.position
+            if direction == 'left' and row == push_position:
+                new_col = col - 1
+                player.position = (row, size - 1) if new_col < 0 else (row, new_col)
+            elif direction == 'right' and row == push_position:
+                new_col = col + 1
+                player.position = (row, 0) if new_col >= size else (row, new_col)
+            elif direction == 'up' and col == push_position:
+                new_row = row - 1
+                player.position = (size - 1, col) if new_row < 0 else (new_row, col)
+            elif direction == 'down' and col == push_position:
+                new_row = row + 1
+                player.position = (0, col) if new_row >= size else (new_row, col)
 
     def is_invalid_push(self, direction, push_position):
-    # Check if the push is at the last exit position
-        if self.last_exit_position:
-            last_direction, last_position = self.last_exit_position
-            if last_position == push_position:
-                if (last_direction == 'left' and direction == 'right') or \
-                (last_direction == 'right' and direction == 'left') or \
-                (last_direction == 'up' and direction == 'down') or \
-                (last_direction == 'down' and direction == 'up'):
-                    return True
+        if self.last_push:
+            last_direction, last_lane = self.last_push
+            opposite = {'left': 'right', 'right': 'left', 'up': 'down', 'down': 'up'}
+            if last_lane == push_position and direction == opposite[last_direction]:
+                return True
         return False
 
     def handle_move(self, action):
@@ -166,5 +181,8 @@ class LabyrinthEnv:
             print(f"Player {player.id}'s current card: {player.current_card if player.current_card else 'No more cards'}")
 
     def is_done(self):
-        return all(len(player.cards) == 0 for player in self.players)
+        for player in self.players:
+            if player.current_card == 'HOME' and player.position == player.home:
+                return True, player.id
+        return False, None
 

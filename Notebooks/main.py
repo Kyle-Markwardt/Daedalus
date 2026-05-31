@@ -31,7 +31,10 @@ def main():
         # Start of Turn
         print(f"\n--- Start of Turn for Player {player.id} ---")
         print(f"Player {player.id} Location: {player.position}")
-        print(f"Player {player.id} Current Card: {player.current_card}")
+        if player.current_card == 'HOME':
+            print(f"Player {player.id} Current Goal: Return to home {player.home}")
+        else:
+            print(f"Player {player.id} Current Card: {player.current_card}")
 
          # Get valid moves for debugging
         valid_moves = env.get_valid_moves(player.position)
@@ -129,10 +132,18 @@ def main():
             except ValueError:
                 print("Invalid input. Please enter valid row and column numbers.")
 
+        # Check for a winner after every move
+        done, winner_id = env.is_done()
+        if done:
+            clear_console()
+            env.board.visualize_board(env.players)
+            print(f"\n*** Player {winner_id} wins! ***")
+            break
+
         # Visualize the board after the move
         clear_console()
         env.board.visualize_board(env.players)
-        
+
         print(f"\n--- End of Turn for Player {player.id} ---")
 
         # Switch to the next player
