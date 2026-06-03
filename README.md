@@ -1,6 +1,8 @@
 # Daedalus
 
-**Python reference implementation and RL training backend for [Hawara](https://github.com/Kyle-Markwardt) — an Egyptian labyrinth tile-pushing game.**
+> *In Greek mythology, Daedalus was the master craftsman commissioned by King Minos to build the Labyrinth — the maze beneath Crete designed to contain the Minotaur. He is the original architect of labyrinths. This project builds one.*
+
+**Python reference implementation and RL training backend for [Hawara](https://github.com/AlleghenyGames) — an Egyptian labyrinth tile-pushing game.**
 
 Hawara is a digital board game inspired by the shifting-tile labyrinth mechanic, themed around the sunken Egyptian labyrinth near Lake Moeris — the structure described by Herodotus as surpassing even the pyramids. This repository contains the authoritative Python game engine, which serves two purposes:
 
