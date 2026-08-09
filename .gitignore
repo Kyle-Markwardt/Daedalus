@@ -6,3 +6,7 @@ __pycache__/
 dist/
 build/
 .env
+
+# claude code local state
+.claude/
+CLAUDE.local.md
